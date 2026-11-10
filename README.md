@@ -602,3 +602,5 @@ DATABASE_URL=postgresql://user:pass@localhost:5432/hevy2garmin pytest tests/ -v
 ## License
 
 MIT
+
+<!-- Trigger Vercel deployment -->
