@@ -119,6 +119,7 @@ export async function loadSyncSettings(sql: Sql): Promise<SyncSettings> {
     const n = Number(profileCfg?.[stored]);
     if (Number.isFinite(n) && n > 0) (profile as Record<string, unknown>)[engine] = n;
   }
+  if (profileCfg?.calorie_method === "strength") profile.calorieMethod = "strength";
   const tz = profileCfg?.timezone;
   if (typeof tz === "string" && tz.trim()) profile.timezone = tz.trim();
   for (const [stored, engine] of TIMING_KEYS) {

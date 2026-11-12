@@ -19,6 +19,7 @@ interface Props {
   birthYear: number | null;
   sex: string | null;
   vo2max: number | null;
+  calorieMethod?: string;
   timezone: string | null;
   // Enhance-watch + description
   mergeMode: boolean;
@@ -98,6 +99,7 @@ export function SettingsForm(p: Props) {
   const [weight, setWeight] = useState(p.weightKg != null ? String(p.weightKg) : "");
   const [birthYear, setBirthYear] = useState(p.birthYear != null ? String(p.birthYear) : "");
   const [sex, setSex] = useState(p.sex ?? "male");
+  const [calorieMethod, setCalorieMethod] = useState(p.calorieMethod === "strength" ? "strength" : "keytel");
   const [vo2max, setVo2max] = useState(p.vo2max != null ? String(p.vo2max) : "");
   const [timezone, setTimezone] = useState(p.timezone ?? "");
   const [syncStartDate, setSyncStartDate] = useState(p.syncStartDate ?? "");
@@ -151,7 +153,7 @@ export function SettingsForm(p: Props) {
           merge_max_drift_min: numOrUndef(drift) ?? 20,
           merge_activity_types: ["strength_training", ...extras],
         },
-        user_profile: profile,
+        user_profile: { ...profile, calorie_method: calorieMethod },
         // Sent even when blank: clearing it is how the older workouts come back
         // as candidates, so an empty string has to reach the server.
         sync_window: { start_date: syncStartDate.trim() },
@@ -262,19 +264,21 @@ export function SettingsForm(p: Props) {
             older sessions in Garmin by hand. Leave it empty to consider your whole Hevy history.
           </p>
         </div>
+        <div className={`${cardCls} mt-4`}>
+          <label className={labelCls} htmlFor="sf-calories">Calorie estimate</label>
+          <select id="sf-calories" value={calorieMethod} onChange={(e) => setCalorieMethod(e.target.value)} className={controlCls}>
+            <option value="keytel">Keytel with VO₂max (existing default)</option>
+            <option value="strength">Strength with recovery periods (experimental)</option>
+          </select>
+        </div>
         <button type="button" onClick={() => setShowCalc((v) => !v)} className="mt-2 text-xs text-teal underline">
           {showCalc ? "Hide" : "How are calories calculated?"}
         </button>
         {showCalc && (
           <div className="mt-2 rounded-lg border border-border bg-surface p-3 text-xs text-text-secondary">
-            <p>Calories use the Keytel (2005) heart-rate equation, per minute:</p>
-            <p className="my-1 font-mono text-[11px] text-text">
-              male: (−55.0969 + 0.6309·HR + 0.1988·wt + 0.2017·age) / 4.184
-            </p>
-            <p className="font-mono text-[11px] text-text">
-              female: (−20.4022 + 0.4472·HR − 0.1263·wt + 0.074·age) / 4.184
-            </p>
-            <p className="mt-1">Weight, birth year, sex and VO₂max above feed this estimate.</p>
+            <p>Keytel with VO₂max: (−95.7735 + 0.634·HR + 0.404·VO₂max + 0.394·kg + 0.271·age) / 4.184 kcal/min. Sex is not used by this implementation. Missing HR uses 90 bpm.</p>
+            <p>Experimental strength estimate: 6 MET lifting and 1.5 MET recovery; kcal = MET × 3.5 × kg / 200 × minutes. Includes resting energy. Set times use logged durations or timing settings scaled to the session, not measured effort. Phase weighting is an assumption, not a validated personal model.</p>
+            <p>Saving does not update existing activities. Applies when generating new FIT files; merge/describe mode preserves an existing watch activity’s calories. No EPOC multiplier is applied.</p>
           </div>
         )}
       </div>

@@ -222,6 +222,7 @@ export default async function SettingsPage() {
           birthYear={numOrNull(profile.birth_year)}
           sex={profile.sex != null ? String(profile.sex) : null}
           vo2max={numOrNull(profile.vo2max)}
+          calorieMethod={String(profile.calorie_method ?? "keytel")}
           timezone={profile.timezone != null ? String(profile.timezone) : null}
           syncStartDate={syncWindow.start_date != null ? String(syncWindow.start_date) : null}
           mergeMode={Boolean(merge.merge_mode)}

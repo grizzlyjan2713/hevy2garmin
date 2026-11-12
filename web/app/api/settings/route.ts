@@ -77,6 +77,7 @@ function sanitise(key: string, raw: Obj): Obj {
       out.merge_activity_types = ["strength_training", ...Array.from(new Set(extras))];
     }
   } else if (key === "user_profile") {
+    if (raw.calorie_method === "keytel" || raw.calorie_method === "strength") out.calorie_method = raw.calorie_method;
     if ("weight_kg" in raw) {
       const w = Number(raw.weight_kg);
       if (Number.isFinite(w) && w > 0 && w < 500) out.weight_kg = Math.round(w * 10) / 10;

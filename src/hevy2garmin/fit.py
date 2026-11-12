@@ -7,6 +7,7 @@ uploaded to Garmin Connect.
 
 from __future__ import annotations
 
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -55,6 +56,7 @@ def _get_profile(override: dict | None = None) -> dict:
 
     cfg = load_config()
     profile = {
+        "calorie_method": cfg.get("user_profile", {}).get("calorie_method", "keytel"),
         "weight_kg": cfg.get("user_profile", {}).get("weight_kg", 80.0),
         "birth_year": cfg.get("user_profile", {}).get("birth_year", 1990),
         "vo2max": cfg.get("user_profile", {}).get("vo2max", 45.0),
@@ -149,6 +151,18 @@ def _calc_calories(
         ) / 4.184
         total += max(0.0, kcal_per_min) * interval_min
     return round(total)
+
+
+def calc_strength_calories(weight_kg: float, active_s: float, rest_s: float) -> int:
+    """Experimental gross kcal; phase METs are assumptions, not measurements."""
+    if (
+        not all(math.isfinite(v) for v in (weight_kg, active_s, rest_s))
+        or weight_kg <= 0
+        or active_s < 0
+        or rest_s < 0
+    ):
+        raise ValueError("Invalid strength calorie inputs")
+    return math.floor((6 * active_s + 1.5 * rest_s) / 60 * 3.5 * weight_kg / 200 + 0.5)
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +289,13 @@ def generate_fit(
         scaled_set = si["set_dur"] * scale
         si["end_offset_s"] = cursor_s + scaled_set
         cursor_s += scaled_set + si["rest_dur"] * scale
+
+    if p.get("calorie_method") == "strength":
+        active_s = sum(
+            max(0, min(duration_s, si["end_offset_s"]) - min(duration_s, si["start_offset_s"]))
+            for si in all_sets_info
+        )
+        calories = calc_strength_calories(p["weight_kg"], active_s, max(0, duration_s - active_s))
 
     # -- Build FIT messages --
     builder = FitFileBuilder(auto_define=True, min_string_size=50)

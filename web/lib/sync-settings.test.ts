@@ -188,3 +188,10 @@ describe("the profile and timing settings", () => {
     expect((await loadSyncSettings(fakeSql())).profile).toEqual({});
   });
 });
+
+ it("opts into strength only for the explicit saved method", async () => {
+   expect((await loadSyncSettings(fakeSql({user_profile:{calorie_method:"strength"}}))).profile.calorieMethod).toBe("strength");
+   for (const method of [undefined, "keytel", "invalid"]) {
+     expect((await loadSyncSettings(fakeSql({user_profile:{calorie_method:method}}))).profile.calorieMethod).toBeUndefined();
+   }
+ });

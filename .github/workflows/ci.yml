@@ -184,6 +184,9 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Build local sync engine
+        run: npm ci --prefix ../typescript && npm run build --prefix ../typescript
+
       - name: Install
         run: npm ci || npm install
 
@@ -234,6 +237,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+
+      - name: Build local sync engine
+        run: npm ci --prefix ../typescript && npm run build --prefix ../typescript
 
       - name: Install exactly from the lockfile (no fallback)
         run: npm ci
@@ -308,6 +314,8 @@ jobs:
       - name: Install and build the web app
         working-directory: web
         run: |
+          npm ci --prefix ../typescript
+          npm run build --prefix ../typescript
           npm ci
           npm run build
 
@@ -360,4 +368,6 @@ jobs:
       # they skip, so an unset URL fails here rather than passing silently (#709).
       - name: The store's upserts against real Postgres
         working-directory: web
+        run: TEST_DATABASE_URL="${DATABASE_URL:?}" npx vitest run lib/pending-store.db.test.ts
+
         run: TEST_DATABASE_URL="${DATABASE_URL:?}" npx vitest run lib/pending-store.db.test.ts
