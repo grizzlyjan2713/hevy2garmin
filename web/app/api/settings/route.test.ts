@@ -170,3 +170,13 @@ describe("sync start date", () => {
     expect(writes.find((w) => w.key === "sync_window")?.value.start_date).toBe("");
   });
 });
+
+it.each(["strength", "keytel"])("saves the explicit calorie method %s without sync side effects", async (method) => {
+  const res = await POST(req({user_profile:{calorie_method:method}}));
+  expect(res.status).toBe(200);
+  expect(saved("user_profile")?.calorie_method).toBe(method);
+});
+it("ignores unknown calorie methods", async () => {
+  await POST(req({user_profile:{calorie_method:"unknown",weight_kg:112}}));
+  expect(saved("user_profile")?.calorie_method).toBeUndefined();
+});

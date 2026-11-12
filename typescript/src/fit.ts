@@ -16,6 +16,7 @@ export const DEFAULT_HR_BPM = 90;
 export const FIT_EPOCH_S = 631065600;
 
 export interface FitProfile {
+  calorieMethod?: "keytel" | "strength";
   weightKg: number;
   birthYear: number;
   vo2max: number;
@@ -91,6 +92,12 @@ export function calcCalories(hrBpm: number[], durationS: number, workoutYear: nu
   return Math.round(total);
 }
 
+/** Experimental gross kcal: phase METs are assumptions, not individual measurements. */
+export function calcStrengthCalories(weightKg: number, activeS: number, restS: number): number {
+  if (![weightKg, activeS, restS].every(Number.isFinite) || weightKg <= 0 || activeS < 0 || restS < 0) throw new Error("Invalid strength calorie inputs");
+  return Math.round((6 * activeS + 1.5 * restS) / 60 * 3.5 * weightKg / 200);
+}
+
 export function generateFit(
   workout: HevyWorkout,
   hrSamples: HrSample[] | null,
@@ -127,7 +134,7 @@ export function generateFit(
   const durationS = (endDt.getTime() - startDt.getTime()) / 1000;
   const endMs = startDt.getTime() + Math.round(durationS * 1000);
   const workoutYear = startDt.getUTCFullYear();
-  const calories = calcCalories(hrBpm, durationS, workoutYear, p);
+  let calories = calcCalories(hrBpm, durationS, workoutYear, p);
 
   const exercises = workout.exercises ?? [];
   let totalDistanceM = 0;
@@ -157,6 +164,12 @@ export function generateFit(
     si.startOffsetS = cursor;
     si.endOffsetS = cursor + si.setDur * scale;
     cursor = si.endOffsetS + si.restDur * scale;
+  }
+
+  if (p.calorieMethod === "strength") {
+    const activeS = allSets.reduce((sum, si) => sum + Math.max(0,
+      Math.min(durationS, si.endOffsetS) - Math.min(durationS, si.startOffsetS)), 0);
+    calories = calcStrengthCalories(p.weightKg, activeS, Math.max(0, durationS - activeS));
   }
 
   const enc = new Encoder();

@@ -21,6 +21,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "birth_year": 1990,
         "sex": "male",
         "vo2max": 45.0,
+        "calorie_method": "keytel",
     },
     "sync": {
         "default_limit": 10,
