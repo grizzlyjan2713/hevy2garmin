@@ -1,7 +1,8 @@
 """Offline regression checks for the optional phase-weighted estimate."""
 
 import pytest
-from hevy2garmin.fit import calc_strength_calories, calc_calories, generate_fit
+
+from hevy2garmin.fit import calc_calories, calc_strength_calories, generate_fit
 
 
 def test_reference_session():
